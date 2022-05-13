@@ -7,9 +7,6 @@ public class main {
         try {
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
             botsApi.registerBot(new MyTelegramBot());
-            https://vpn5pc.metfone.com.kh/global-protect/getsoftwarepage.esp
-            // Register your newly created AbilityBot
-            botsApi.registerBot(new HelloAbility());
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
