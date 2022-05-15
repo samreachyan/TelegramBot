@@ -24,12 +24,12 @@ public class MyTelegramBot extends TelegramLongPollingBot {
     @Override
     public String getBotUsername() {
         // TODO
-        return "ReachTester_bot";
+        return "telecomputetest_bot";
     }
 
     @Override
     public String getBotToken() {
         // TODO
-        return "5376958796:AAGURvh6VJ5Iba6m8r_e5Svnw4orew3Mafg";
+        return "5338144384:AAFxS3vsd4r704nWx1gi6Fz9w-hoADGYEK0";
     }
 }
