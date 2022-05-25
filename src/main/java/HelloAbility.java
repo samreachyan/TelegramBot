@@ -1,4 +1,7 @@
 import org.telegram.abilitybots.api.bot.AbilityBot;
+import org.telegram.abilitybots.api.objects.Ability;
+import org.telegram.abilitybots.api.objects.Locality;
+import org.telegram.abilitybots.api.objects.Privacy;
 
 public class HelloAbility extends AbilityBot {
 
@@ -11,9 +14,14 @@ public class HelloAbility extends AbilityBot {
                 .builder()
                 .name("hello")
                 .info("says hello world!")
-                .locality(ALL)
-                .privacy(PUBLIC)
+                .locality(Locality.ALL)
+                .privacy(Privacy.PUBLIC)
                 .action(ctx -> silent.send("Hello world!", ctx.chatId()))
                 .build();
+    }
+
+    @Override
+    public long creatorId() {
+        return 2145256237;
     }
 }
