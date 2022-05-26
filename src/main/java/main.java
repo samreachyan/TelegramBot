@@ -8,11 +8,9 @@ public class main {
         String user = "ReachTester_bot";
 
         try {
-//            botsApi.registerBot(new MyTelegramBot());
-//            https://vpn5pc.metfone.com.kh/global-protect/getsoftwarepage.esp
-            // Register your newly created AbilityBot
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-            botsApi.registerBot(new HelloAbility(token, user));
+            botsApi.registerBot(new MyTelegramBot());
+//            botsApi.registerBot(new HelloAbility(token, user));
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
