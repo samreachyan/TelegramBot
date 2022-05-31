@@ -1,10 +1,14 @@
+import com.viettel.DAO.PriceDAO;
 import com.viettel.DAO.SaleTransDAO;
+import com.viettel.entity.Price;
 import com.viettel.entity.SaleTrans;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.general.DefaultPieDataset;
+import org.jfree.data.general.PieDataset;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ActionType;
 import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
@@ -51,7 +55,7 @@ public class MyTelegramBot extends TelegramLongPollingBot {
             // Create another keyboard row
             row = new KeyboardRow();
             // Set each button for the second line
-            row.add("Facebook");
+            row.add("Report Price Stock");
             row.add("Github");
             // Add the second row to the keyboard
             keyboard.add(row);
@@ -134,21 +138,36 @@ public class MyTelegramBot extends TelegramLongPollingBot {
                 e.printStackTrace();
             }
         }
-        else if (update.getMessage().getText().equals("Facebook")) {
+        else if (update.getMessage().getText().equals("Report Price Stock")) {
             SendChatAction sendChatAction = new SendChatAction();
             sendChatAction.setChatId(update.getMessage().getChatId().toString());
+            SendMessage msg = new SendMessage();
+            msg.setChatId(update.getMessage().getChatId().toString());
+            msg.setText("Generating Report the current Price in Stock");
+
             try {
+                execute(msg);
                 sendChatAction.setAction(ActionType.TYPING);
                 execute(sendChatAction);
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
-            SendMessage msg = new SendMessage();
-            msg.setChatId(update.getMessage().getChatId().toString());
-            msg.setText("Thank for waiting! Clicked Facebook");
+
+            // send photo
+            // send photo from FILE path local
+            SendPhoto message = new SendPhoto();
+            message.setChatId(update.getMessage().getChatId().toString());
+            String imgName = null;
+            try {
+                imgName = createPriceReport();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            message.setCaption("Here is Price In Stock");
+            message.setPhoto(new InputFile(new File(imgName)));
 
             try {
-                execute(msg);
+                execute(message); // Call method to send the message
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
@@ -163,9 +182,10 @@ public class MyTelegramBot extends TelegramLongPollingBot {
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
+
             SendMessage msg = new SendMessage();
             msg.setChatId(update.getMessage().getChatId().toString());
-            msg.setText("Thank for waiting! Clicked Github");
+            msg.setText("Clicked Github button");
 
             try {
                 execute(msg);
@@ -247,15 +267,46 @@ public class MyTelegramBot extends TelegramLongPollingBot {
         return null;
     }
 
+
+    /**
+     * create Image Convert from Table Price to Image
+     */
+    public static String createPriceReport() throws IOException {
+        JFreeChart pieChart = ChartFactory.createPieChart(
+                "Report Price In Stock",
+                createPieDataset(),
+                true, true, false);
+
+        int width = 680;    /* Width of the image */
+        int height = 500;   /* Height of the image */
+
+        SimpleDateFormat simpleFormatter = new SimpleDateFormat("dd-MM-yyyy-HH-mm-ss");
+        String date = simpleFormatter.format(new Date());
+        String fileName = "ChartReportPrice_" + date + ".jpeg";
+        File ChartReport = new File(fileName);
+        ChartUtilities.saveChartAsJPEG( ChartReport , pieChart , width , height );
+//        System.out.println("Image name: " + ChartReport.getAbsolutePath());
+        return ChartReport.getAbsolutePath();
+    }
+
+    private static PieDataset createPieDataset( ) {
+        DefaultPieDataset dataset = new DefaultPieDataset( );
+        List<Price> listPrices = new PriceDAO().getAllPrice();
+        for (Price item : listPrices) {
+            dataset.setValue(item.getName(), item.getPrice());
+        }
+        return dataset;
+    }
+
     @Override
     public String getBotUsername() {
         // TODO
-        return "telecomputetest_bot";
+        return BotConfig.BOT_USERNAME;
     }
 
     @Override
     public String getBotToken() {
         // TODO
-        return "5338144384:AAEl190SuQqDGo_EcTsuQinQ2NkW5aj-9XQ";
+        return BotConfig.BOT_TOKEN;
     }
 }

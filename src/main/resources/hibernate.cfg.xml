@@ -17,5 +17,6 @@
         <property name="hibernate.format_sql">true</property>
 
         <mapping class="com.viettel.entity.SaleTrans" />
+        <mapping class="com.viettel.entity.Price" />
     </session-factory>
 </hibernate-configuration>

@@ -10,8 +10,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class SaleTransDAO {
-//    private static Logger logger = LogManager.getLogManager().getLogger(com.viettel.DAO.SaleTransDAO.class.getName());
-    private static Logger logger = Logger.getLogger(SaleTransDAO.class.getName());
+    private static final Logger logger = Logger.getLogger(SaleTransDAO.class.getName());
     public SaleTransDAO() {
     }
 
