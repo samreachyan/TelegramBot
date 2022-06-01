@@ -16,8 +16,8 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
@@ -34,163 +34,223 @@ public class MyTelegramBot extends TelegramLongPollingBot {
 
         // TODO
         System.out.println(update.getMessage().getText());
+        if (update.hasMessage() && update.getMessage().hasText()) {
+            // Command
+            if(update.getMessage().getText().equals("/start")
+                    || update.getMessage().getText().equals("Back")
+                    || update.getMessage().getText().equals("/start@telecomputetest_bot")){
 
-        if(update.getMessage().getText().equals("/start")
-                || update.getMessage().getText().equals("Back")
-                || update.getMessage().getText().equals("/start@telecomputetest_bot")){
+                sendMessage.setChatId(update.getMessage().getChatId().toString());
+                sendMessage.setText("Here is your options below:");
+//            // Create ReplyKeyboardMarkup object
+//            ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+//            // Create the keyboard (list of keyboard rows)
+//            List<KeyboardRow> keyboard = new ArrayList<>();
+//            // Create a keyboard row
+//            KeyboardRow row = new KeyboardRow();
+//            // Set each button, you can also use KeyboardButton objects if you need something else than text
+//            row.add("Report Sale");
+//            row.add("Report Buy");
+//            // Add the first row to the keyboard
+//            keyboard.add(row);
+//            // Create another keyboard row
+//            row = new KeyboardRow();
+//            // Set each button for the second line
+//            row.add("Report Price Stock");
+//            row.add("Github");
+//            // Add the second row to the keyboard
+//            keyboard.add(row);
+//
+//            // Set the keyboard to the markup
+//            keyboardMarkup.setKeyboard(keyboard);
+//            // Add it to the message
+//            sendMessage.setReplyMarkup(keyboardMarkup);
+//            try {
+//                execute(sendMessage); // Sending our message object to user
+//            } catch (TelegramApiException e) {
+//                e.printStackTrace();
+//            }
 
-            sendMessage.setChatId(update.getMessage().getChatId().toString());
-            sendMessage.setText("Here is your options below:");
-            // Create ReplyKeyboardMarkup object
-            ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
-            // Create the keyboard (list of keyboard rows)
-            List<KeyboardRow> keyboard = new ArrayList<>();
-            // Create a keyboard row
-            KeyboardRow row = new KeyboardRow();
-            // Set each button, you can also use KeyboardButton objects if you need something else than text
-            row.add("Report Sale");
-            row.add("Report Buy");
-            // Add the first row to the keyboard
-            keyboard.add(row);
-            // Create another keyboard row
-            row = new KeyboardRow();
-            // Set each button for the second line
-            row.add("Report Price Stock");
-            row.add("Github");
-            // Add the second row to the keyboard
-            keyboard.add(row);
+                InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+                InlineKeyboardButton inlineKeyboardButtonSale = new InlineKeyboardButton();
+                inlineKeyboardButtonSale.setText("Report Sale");
+                inlineKeyboardButtonSale.setCallbackData("sale");
 
-            // Set the keyboard to the markup
-            keyboardMarkup.setKeyboard(keyboard);
-            // Add it to the message
-            sendMessage.setReplyMarkup(keyboardMarkup);
-            try {
-                execute(sendMessage); // Sending our message object to user
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
+
+                InlineKeyboardButton inlineKeyboardButtonBuy = new InlineKeyboardButton();
+                inlineKeyboardButtonBuy.setText("Report Buy");
+                inlineKeyboardButtonBuy.setCallbackData("buy");
+
+                List<InlineKeyboardButton> keyboardButtonsRow1 = new ArrayList<>();
+                keyboardButtonsRow1.add(inlineKeyboardButtonSale);
+                List<InlineKeyboardButton> keyboardButtonsRow2 = new ArrayList<>();
+                keyboardButtonsRow2.add(inlineKeyboardButtonBuy);
+
+                List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+                rowList.add(keyboardButtonsRow1);
+                rowList.add(keyboardButtonsRow2);
+
+                inlineKeyboardMarkup.setKeyboard(rowList);
+                try {
+//                execute(sendMessage); // Sending our message object to user
+                    sendMessage.setReplyMarkup(inlineKeyboardMarkup);
+                    execute(sendMessage);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+            }
+            else if (update.getMessage().getText().equals("Report Sale")) {
+                SendChatAction sendChatAction = new SendChatAction();
+                sendChatAction.setChatId(update.getMessage().getChatId().toString());
+                try {
+                    sendChatAction.setAction(ActionType.TYPING);
+                    execute(sendChatAction);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+
+                // send photo from FILE path local
+                SendPhoto message = new SendPhoto();
+                message.setChatId(update.getMessage().getChatId().toString());
+                String imgName = null;
+                try {
+                    imgName = ChartReport();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                message.setCaption("Here is Report read from Database. Generate image: " + imgName);
+                message.setPhoto(new InputFile(new File(imgName)));
+
+                try {
+                    execute(message); // Call method to send the message
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+
+            }
+            else if (update.getMessage().getText().equals("Report Buy")) {
+                SendChatAction sendChatAction = new SendChatAction();
+                sendChatAction.setChatId(update.getMessage().getChatId().toString());
+                try {
+                    sendChatAction.setAction(ActionType.TYPING);
+                    execute(sendChatAction);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+                SendMessage msg = new SendMessage();
+                msg.setChatId(update.getMessage().getChatId().toString());
+                msg.setText("Thank for waiting");
+
+                try {
+                    execute(msg);
+                    execute(sendChatAction);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+
+                // send photo
+                // send photo from FILE path local
+                SendPhoto message = new SendPhoto();
+                message.setChatId(update.getMessage().getChatId().toString());
+                String imgName = null;
+                try {
+                    imgName = ChartReportBuy();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                message.setCaption("Here is Buy Report");
+                message.setPhoto(new InputFile(new File(imgName)));
+
+                try {
+                    execute(message); // Call method to send the message
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+            }
+            else if (update.getMessage().getText().equals("Report Price Stock")) {
+                SendChatAction sendChatAction = new SendChatAction();
+                sendChatAction.setChatId(update.getMessage().getChatId().toString());
+                SendMessage msg = new SendMessage();
+                msg.setChatId(update.getMessage().getChatId().toString());
+                msg.setText("Generating Report the current Price in Stock");
+
+                try {
+                    execute(msg);
+                    sendChatAction.setAction(ActionType.TYPING);
+                    execute(sendChatAction);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+
+                // send photo
+                // send photo from FILE path local
+                SendPhoto message = new SendPhoto();
+                message.setChatId(update.getMessage().getChatId().toString());
+                String imgName = null;
+                try {
+                    imgName = createPriceReport();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                message.setCaption("Here is Price In Stock");
+                message.setPhoto(new InputFile(new File(imgName)));
+
+                try {
+                    execute(message); // Call method to send the message
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+            }
+            else if (update.getMessage().getText().equals("Github")) {
+                SendChatAction sendChatAction = new SendChatAction();
+                sendChatAction.setChatId(update.getMessage().getChatId().toString());
+                try {
+                    sendChatAction.setAction(ActionType.TYPING);
+                    execute(sendChatAction);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+
+                SendMessage msg = new SendMessage();
+                msg.setChatId(update.getMessage().getChatId().toString());
+                msg.setText("Clicked Github button");
+
+                try {
+                    execute(msg);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+            }
+            else {
+                SendChatAction sendChatAction = new SendChatAction();
+                sendChatAction.setChatId(update.getMessage().getChatId().toString());
+                try {
+                    sendChatAction.setAction(ActionType.TYPING);
+                    execute(sendChatAction);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+
+                SendMessage msg = new SendMessage();
+                msg.setChatId(update.getMessage().getChatId().toString());
+                msg.setText("Invalid command message. Click /start to start again");
+
+                try {
+                    execute(msg);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
             }
         }
-        else if (update.getMessage().getText().equals("Report Sale")) {
-            SendChatAction sendChatAction = new SendChatAction();
-            sendChatAction.setChatId(update.getMessage().getChatId().toString());
-            try {
-                sendChatAction.setAction(ActionType.TYPING);
-                execute(sendChatAction);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
+        else if (update.getChosenInlineQuery().getInlineMessageId()) {
+            // Set variables
+            String call_data = update.getCallbackQuery().getData();
+            long message_id = update.getCallbackQuery().getMessage().getMessageId();
+            long chat_id = update.getCallbackQuery().getMessage().getChatId();
 
-            // send photo from FILE path local
-            SendPhoto message = new SendPhoto();
-            message.setChatId(update.getMessage().getChatId().toString());
-            String imgName = null;
-            try {
-                imgName = ChartReport();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            message.setCaption("Here is Report read from Database. Generate image: " + imgName);
-            message.setPhoto(new InputFile(new File(imgName)));
-
-            try {
-                execute(message); // Call method to send the message
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-
-        }
-        else if (update.getMessage().getText().equals("Report Buy")) {
-            SendChatAction sendChatAction = new SendChatAction();
-            sendChatAction.setChatId(update.getMessage().getChatId().toString());
-            try {
-                sendChatAction.setAction(ActionType.TYPING);
-                execute(sendChatAction);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-            SendMessage msg = new SendMessage();
-            msg.setChatId(update.getMessage().getChatId().toString());
-            msg.setText("Thank for waiting");
-
-            try {
-                execute(msg);
-                execute(sendChatAction);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-
-            // send photo
-            // send photo from FILE path local
-            SendPhoto message = new SendPhoto();
-            message.setChatId(update.getMessage().getChatId().toString());
-            String imgName = null;
-            try {
-                imgName = ChartReportBuy();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            message.setCaption("Here is Buy Report");
-            message.setPhoto(new InputFile(new File(imgName)));
-
-            try {
-                execute(message); // Call method to send the message
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-        }
-        else if (update.getMessage().getText().equals("Report Price Stock")) {
-            SendChatAction sendChatAction = new SendChatAction();
-            sendChatAction.setChatId(update.getMessage().getChatId().toString());
-            SendMessage msg = new SendMessage();
-            msg.setChatId(update.getMessage().getChatId().toString());
-            msg.setText("Generating Report the current Price in Stock");
-
-            try {
-                execute(msg);
-                sendChatAction.setAction(ActionType.TYPING);
-                execute(sendChatAction);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-
-            // send photo
-            // send photo from FILE path local
-            SendPhoto message = new SendPhoto();
-            message.setChatId(update.getMessage().getChatId().toString());
-            String imgName = null;
-            try {
-                imgName = createPriceReport();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            message.setCaption("Here is Price In Stock");
-            message.setPhoto(new InputFile(new File(imgName)));
-
-            try {
-                execute(message); // Call method to send the message
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-        }
-
-        else if (update.getMessage().getText().equals("Github")) {
-            SendChatAction sendChatAction = new SendChatAction();
-            sendChatAction.setChatId(update.getMessage().getChatId().toString());
-            try {
-                sendChatAction.setAction(ActionType.TYPING);
-                execute(sendChatAction);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-
-            SendMessage msg = new SendMessage();
-            msg.setChatId(update.getMessage().getChatId().toString());
-            msg.setText("Clicked Github button");
-
-            try {
-                execute(msg);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
+            if (call_data.equals("sale")) {
+                String answer = "Updated message text";
+                System.out.println(answer);
             }
         }
     }

@@ -40,6 +40,11 @@
             <artifactId>hibernate-core</artifactId>
             <version>5.3.7.Final</version>
         </dependency>
+        <dependency>
+            <groupId>org.telegram</groupId>
+            <artifactId>telegrambotsextensions</artifactId>
+            <version>4.0.1</version>
+        </dependency>
 
     </dependencies>
     <properties>
