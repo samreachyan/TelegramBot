@@ -95,7 +95,7 @@ public class ReportBot extends TelegramLongPollingBot {
         else if (update.hasCallbackQuery()) {
             CallbackQuery callbackQuery = update.getCallbackQuery();
             String data = callbackQuery.getData();
-            String chat_id = callbackQuery.getFrom().getId().toString();
+            String chat_id = callbackQuery.getMessage().getChat().getId().toString();
 
             SendChatAction sendChatAction = new SendChatAction();
             if (data.equals(Constant.SALE_REPORT)) {
