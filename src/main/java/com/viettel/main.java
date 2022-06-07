@@ -1,3 +1,5 @@
+package com.viettel;
+
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
@@ -7,8 +9,7 @@ public class main {
 
         try {
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-            botsApi.registerBot(new MyTelegramBot());
-//            botsApi.registerBot(new HelloAbility(token, user));
+            botsApi.registerBot(new ReportBot());
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
