@@ -31,9 +31,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class ReportBot extends TelegramLongPollingBot {
     List<TelegramUser> users = TelegramUserDAO.getAllTelegramUsers();
@@ -48,6 +46,8 @@ public class ReportBot extends TelegramLongPollingBot {
                 // start
                 if (update.getMessage().hasText()) {
                     if (update.getMessage().getText().equals("ភាសា")
+                            || update.getMessage().getText().equals("lang")
+                            || update.getMessage().getText().equals("/lang@telecomputetest_bot")
                             || update.getMessage().getText().equals("/start")
                             || update.getMessage().getText().equals("/start@telecomputetest_bot")) {
                         selectLanguageSession(chat_id);
@@ -94,7 +94,7 @@ public class ReportBot extends TelegramLongPollingBot {
                             || update.getMessage().getText().equals("/help@telecomputetest_bot")) {
                         SendMessage message = new SendMessage();
                         message.setChatId(chat_id);
-                        message.setText("Our bot is currently support only command /start");
+                        message.setText("សូមសរសេរអក្សរ /start ដើម្បីចាប់ផ្តើមឡើងវិញ និងសរសេរអក្សរ ភាសា ដើម្បីជ្រើសរើសភាសា\n\nOur bot is currently support only command /start and write /lang to select language");
                         try {
                             execute(message);
                         } catch (TelegramApiException e) {
@@ -104,7 +104,14 @@ public class ReportBot extends TelegramLongPollingBot {
                 }
             } else {
                 step = user.getStep();
-                if (update.getMessage().getText().equals("/start")
+                if (update.getMessage().getText().equals("ភាសា")
+                        || update.getMessage().getText().equals("lang")
+                        || update.getMessage().getText().equals("/lang")
+                        || update.getMessage().getText().equals("/lang@telecomputetest_bot")) {
+                    step = Constant.SELECT_LANG;
+                    selectLanguageSession(chat_id);
+                }
+                else if (update.getMessage().getText().equals("/start")
                         || update.getMessage().getText().equals("/start@telecomputetest_bot")) {
                     SendMessage sendMessage = new SendMessage();
                     sendMessage.setText("Here is option:");
@@ -142,15 +149,11 @@ public class ReportBot extends TelegramLongPollingBot {
                     } catch (TelegramApiException e) {
                         e.printStackTrace();
                     }
-                } else if (update.getMessage().getText().equals("ភាសា")) {
-                    step = Constant.SELECT_LANG;
-                    selectLanguageSession(chat_id);
-
                 } else if (update.getMessage().getText().equals("/help")
                         || update.getMessage().getText().equals("/help@telecomputetest_bot")) {
                     SendMessage message = new SendMessage();
                     message.setChatId(chat_id);
-                    message.setText("Our bot is currently support only command /start");
+                    message.setText("សូមសរសេរអក្សរ /start ដើម្បីចាប់ផ្តើមឡើងវិញ និងសរសេរអក្សរ ភាសា ដើម្បីជ្រើសរើសភាសា\n\nOur bot is currently support only command /start and write /lang to select language");
                     try {
                         execute(message);
                     } catch (TelegramApiException e) {
