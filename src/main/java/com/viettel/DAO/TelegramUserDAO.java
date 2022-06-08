@@ -39,7 +39,7 @@ public class TelegramUserDAO {
         Session session = null;
         try {
             session = HibernateUtils.getSessionFactory().openSession();
-            session.getTransaction();
+            session.beginTransaction();
             session.save(user);
             session.flush();
         } catch (Exception e) {

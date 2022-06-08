@@ -18,7 +18,7 @@ public class SaleTransDAO {
         logger.info("Begin save sale trans");
         Session session = HibernateUtils.getSessionFactory().openSession();
         try {
-            session.getTransaction();
+            session.beginTransaction();
             session.save(saleTrans);
             session.flush();
             session.clear();
@@ -35,14 +35,19 @@ public class SaleTransDAO {
     public List<SaleTrans> getALlSaleTrans() {
         logger.info("Begin get all sale trans");
         List<SaleTrans> lstSaleTrans = new ArrayList<SaleTrans>();
+        Session session = null;
         try {
-            Session session = HibernateUtils.getSessionFactory().openSession();
+            session = HibernateUtils.getSessionFactory().openSession();
+            session.beginTransaction();
             String sql = "FROM SaleTrans where 1=1";
             Query query = session.createQuery(sql);
             lstSaleTrans = query.list();
         } catch (Exception ex) {
+            session.getTransaction().rollback();
             ex.printStackTrace();
             logger.info("error " + ex.getMessage());
+        } finally {
+            session.getTransaction().commit();
         }
         return lstSaleTrans;
     }
@@ -50,14 +55,19 @@ public class SaleTransDAO {
     public List<SaleTrans> getALlSaleTransBuy() {
         logger.info("Begin get all sale trans");
         List<SaleTrans> lstSaleTrans = new ArrayList<SaleTrans>();
+        Session session = null;
         try {
-            Session session = HibernateUtils.getSessionFactory().openSession();
+            session = HibernateUtils.getSessionFactory().openSession();
+            session.beginTransaction();
             String sql = "FROM SaleTrans where 1=1 ORDER BY id DESC";
             Query query = session.createQuery(sql);
             lstSaleTrans = query.list();
         } catch (Exception ex) {
+            session.getTransaction().rollback();
             ex.printStackTrace();
             logger.info("error " + ex.getMessage());
+        } finally {
+            session.getTransaction().commit();
         }
         return lstSaleTrans;
     }
