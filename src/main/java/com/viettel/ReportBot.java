@@ -2,10 +2,12 @@ package com.viettel;
 
 import com.viettel.DAO.PriceDAO;
 import com.viettel.DAO.SaleTransDAO;
+import com.viettel.DAO.TelegramUserDAO;
 import com.viettel.config.BotConfig;
 import com.viettel.config.Constant;
 import com.viettel.entity.Price;
 import com.viettel.entity.SaleTrans;
+import com.viettel.entity.TelegramUser;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
@@ -34,61 +36,126 @@ import java.util.Date;
 import java.util.List;
 
 public class ReportBot extends TelegramLongPollingBot {
+    List<TelegramUser> users = TelegramUserDAO.getAllTelegramUsers();
     @Override
     public void onUpdateReceived(Update update) {
-        if (update.hasMessage() && !update.getMessage().getText().isEmpty()) {
-
+        String step = "";
+        if (update.hasMessage()) {
+            // find user and save
             String chat_id = update.getMessage().getChatId().toString();
-            if (update.getMessage().getText().equals("/start")
-                    || update.getMessage().getText().equals("home")
-                    || update.getMessage().getText().equals("/start@telecomputetest_bot")) {
+            TelegramUser user = TelegramUserDAO.findTelegramUser(chat_id);
+            if (user == null) {
+                // start
+                if (update.getMessage().hasText()) {
+                    if (update.getMessage().getText().equals("ភាសា")
+                            || update.getMessage().getText().equals("/start")
+                            || update.getMessage().getText().equals("/start@telecomputetest_bot")) {
+                        selectLanguageSession(chat_id);
+                        step = Constant.SELECT_LANG;
+                        user = TelegramUserDAO.saveTelegramUser(new TelegramUser(chat_id, Constant.SELECT_LANG, null, new Date()));
+                    } else if (step.equals(Constant.SELECT_REPORT)) {
+                        SendMessage sendMessage = new SendMessage();
+                        sendMessage.setText("Here is option:");
+                        sendMessage.setChatId(chat_id);
+                        sendMessage.setParseMode(ParseMode.MARKDOWN);
 
-                SendMessage sendMessage = new SendMessage();
-                sendMessage.setText("Here is option:");
-                sendMessage.setChatId(chat_id);
-                sendMessage.setParseMode(ParseMode.MARKDOWN);
+                        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+                        List<List<InlineKeyboardButton>> listInlineButton = new ArrayList<>();
+                        List<InlineKeyboardButton> reportSaleBtn = new ArrayList<>();
+                        List<InlineKeyboardButton> reportBuyBtn = new ArrayList<>();
+                        List<InlineKeyboardButton> reportPriceBtn = new ArrayList<>();
+                        InlineKeyboardButton saleBtn = new InlineKeyboardButton();
+                        InlineKeyboardButton buyBtn = new InlineKeyboardButton();
+                        InlineKeyboardButton priceBtn = new InlineKeyboardButton();
 
-                InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-                List<List<InlineKeyboardButton>> listInlineButton = new ArrayList<>();
-                List<InlineKeyboardButton> reportSaleBtn = new ArrayList<>();
-                List<InlineKeyboardButton> reportBuyBtn = new ArrayList<>();
-                List<InlineKeyboardButton> reportPriceBtn = new ArrayList<>();
-                InlineKeyboardButton saleBtn = new InlineKeyboardButton();
-                InlineKeyboardButton buyBtn = new InlineKeyboardButton();
-                InlineKeyboardButton priceBtn = new InlineKeyboardButton();
+                        saleBtn.setText(Constant.SALE_REPORT_TEXT);
+                        saleBtn.setCallbackData(Constant.SALE_REPORT);
 
-                saleBtn.setText(Constant.SALE_REPORT_TEXT);
-                saleBtn.setCallbackData(Constant.SALE_REPORT);
+                        buyBtn.setText(Constant.BUY_REPORT_TEXT);
+                        buyBtn.setCallbackData(Constant.BUY_REPORT);
 
-                buyBtn.setText(Constant.BUY_REPORT_TEXT);
-                buyBtn.setCallbackData(Constant.BUY_REPORT);
+                        priceBtn.setText(Constant.PRICE_TEXT);
+                        priceBtn.setCallbackData(Constant.PRICE_REPORT);
 
-                priceBtn.setText(Constant.PRICE_TEXT);
-                priceBtn.setCallbackData(Constant.PRICE_REPORT);
-
-                reportSaleBtn.add(saleBtn);
-                reportBuyBtn.add(buyBtn);
-                reportPriceBtn.add(priceBtn);
-                listInlineButton.add(reportSaleBtn);
-                listInlineButton.add(reportBuyBtn);
-                listInlineButton.add(reportPriceBtn);
-                inlineKeyboardMarkup.setKeyboard(listInlineButton);
-                sendMessage.setReplyMarkup(inlineKeyboardMarkup);
-                try {
-                    execute(sendMessage);
-                } catch (TelegramApiException e) {
-                    e.printStackTrace();
+                        reportSaleBtn.add(saleBtn);
+                        reportBuyBtn.add(buyBtn);
+                        reportPriceBtn.add(priceBtn);
+                        listInlineButton.add(reportSaleBtn);
+                        listInlineButton.add(reportBuyBtn);
+                        listInlineButton.add(reportPriceBtn);
+                        inlineKeyboardMarkup.setKeyboard(listInlineButton);
+                        sendMessage.setReplyMarkup(inlineKeyboardMarkup);
+                        try {
+                            execute(sendMessage);
+                        } catch (TelegramApiException e) {
+                            e.printStackTrace();
+                        }
+                    } else if (update.getMessage().getText().equals("/help")
+                            || update.getMessage().getText().equals("/help@telecomputetest_bot")) {
+                        SendMessage message = new SendMessage();
+                        message.setChatId(chat_id);
+                        message.setText("Our bot is currently support only command /start");
+                        try {
+                            execute(message);
+                        } catch (TelegramApiException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
-            }
-            else if (update.getMessage().getText().equals("/help")
-                    || update.getMessage().getText().equals("/help@telecomputetest_bot")) {
-                SendMessage message = new SendMessage();
-                message.setChatId(chat_id);
-                message.setText("Our bot is currently support only command /start");
-                try {
-                    execute(message);
-                } catch (TelegramApiException e) {
-                    e.printStackTrace();
+            } else {
+                step = user.getStep();
+                if (update.getMessage().getText().equals("/start")
+                        || update.getMessage().getText().equals("/start@telecomputetest_bot")) {
+                    SendMessage sendMessage = new SendMessage();
+                    sendMessage.setText("Here is option:");
+                    sendMessage.setChatId(chat_id);
+                    sendMessage.setParseMode(ParseMode.MARKDOWN);
+
+                    InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+                    List<List<InlineKeyboardButton>> listInlineButton = new ArrayList<>();
+                    List<InlineKeyboardButton> reportSaleBtn = new ArrayList<>();
+                    List<InlineKeyboardButton> reportBuyBtn = new ArrayList<>();
+                    List<InlineKeyboardButton> reportPriceBtn = new ArrayList<>();
+                    InlineKeyboardButton saleBtn = new InlineKeyboardButton();
+                    InlineKeyboardButton buyBtn = new InlineKeyboardButton();
+                    InlineKeyboardButton priceBtn = new InlineKeyboardButton();
+
+                    saleBtn.setText(Constant.SALE_REPORT_TEXT);
+                    saleBtn.setCallbackData(Constant.SALE_REPORT);
+
+                    buyBtn.setText(Constant.BUY_REPORT_TEXT);
+                    buyBtn.setCallbackData(Constant.BUY_REPORT);
+
+                    priceBtn.setText(Constant.PRICE_TEXT);
+                    priceBtn.setCallbackData(Constant.PRICE_REPORT);
+
+                    reportSaleBtn.add(saleBtn);
+                    reportBuyBtn.add(buyBtn);
+                    reportPriceBtn.add(priceBtn);
+                    listInlineButton.add(reportSaleBtn);
+                    listInlineButton.add(reportBuyBtn);
+                    listInlineButton.add(reportPriceBtn);
+                    inlineKeyboardMarkup.setKeyboard(listInlineButton);
+                    sendMessage.setReplyMarkup(inlineKeyboardMarkup);
+                    try {
+                        execute(sendMessage);
+                    } catch (TelegramApiException e) {
+                        e.printStackTrace();
+                    }
+                } else if (update.getMessage().getText().equals("ភាសា")) {
+                    step = Constant.SELECT_LANG;
+                    selectLanguageSession(chat_id);
+
+                } else if (update.getMessage().getText().equals("/help")
+                        || update.getMessage().getText().equals("/help@telecomputetest_bot")) {
+                    SendMessage message = new SendMessage();
+                    message.setChatId(chat_id);
+                    message.setText("Our bot is currently support only command /start");
+                    try {
+                        execute(message);
+                    } catch (TelegramApiException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
@@ -124,6 +191,7 @@ public class ReportBot extends TelegramLongPollingBot {
                 message.setPhoto(new InputFile(new File(imgName)));
 
                 try {
+                    step = Constant.SELECT_REPORT;
                     execute(message); // Call method to send the message
                 } catch (TelegramApiException e) {
                     e.printStackTrace();
@@ -155,6 +223,7 @@ public class ReportBot extends TelegramLongPollingBot {
                 message.setPhoto(new InputFile(new File(imgName)));
                 try {
                     execute(message); // Call method to send the message
+                    step = Constant.SELECT_REPORT;
                 } catch (TelegramApiException e) {
                     e.printStackTrace();
                 }
@@ -187,10 +256,128 @@ public class ReportBot extends TelegramLongPollingBot {
 
                 try {
                     execute(message); // Call method to send the message
+                    step = Constant.SELECT_REPORT;
                 } catch (TelegramApiException e) {
                     e.printStackTrace();
                 }
+            } else if (data.equals(Constant.LANG_KH)) {
+                defaultKhmerLangService(chat_id);
+                step = Constant.SELECT_REPORT;
+            } else if (data.equals(Constant.LANG_EN)) {
+                defaultEnglishService(chat_id);
+                step = Constant.SELECT_REPORT;
             }
+
+        }
+    }
+
+    public void selectLanguageSession(String chat_id) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setText("សូមមេត្តាជ្រើសរើសភាសា \nPlease select the language below:\n");
+        sendMessage.setChatId(chat_id);
+        sendMessage.setParseMode(ParseMode.MARKDOWN);
+
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> listInlineButton = new ArrayList<>();
+        List<InlineKeyboardButton> langKh = new ArrayList<>();
+        List<InlineKeyboardButton> langEn = new ArrayList<>();
+        InlineKeyboardButton langKhBtn = new InlineKeyboardButton();
+        InlineKeyboardButton langeEnBtn = new InlineKeyboardButton();
+
+        langKhBtn.setText(Constant.LANG_KH_TEXT);
+        langKhBtn.setCallbackData(Constant.LANG_KH);
+
+        langeEnBtn.setText(Constant.LANG_EN_TEXT);
+        langeEnBtn.setCallbackData(Constant.LANG_EN);
+
+        langKh.add(langKhBtn);
+        langEn.add(langeEnBtn);
+        listInlineButton.add(langKh);
+        listInlineButton.add(langEn);
+        inlineKeyboardMarkup.setKeyboard(listInlineButton);
+        sendMessage.setReplyMarkup(inlineKeyboardMarkup); // set keyboard on text
+        try {
+            execute(sendMessage);
+        } catch (TelegramApiException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void defaultKhmerLangService(String chat_id) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setText("សូមជ្រើសរើសការបង្ហាញរបាយការណ៍៖ ");
+        sendMessage.setChatId(chat_id);
+        sendMessage.setParseMode(ParseMode.MARKDOWN);
+
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> listInlineButton = new ArrayList<>();
+        List<InlineKeyboardButton> reportSaleBtn = new ArrayList<>();
+        List<InlineKeyboardButton> reportBuyBtn = new ArrayList<>();
+        List<InlineKeyboardButton> reportPriceBtn = new ArrayList<>();
+        InlineKeyboardButton saleBtn = new InlineKeyboardButton();
+        InlineKeyboardButton buyBtn = new InlineKeyboardButton();
+        InlineKeyboardButton priceBtn = new InlineKeyboardButton();
+
+        saleBtn.setText(Constant.SALE_REPORT_TEXT_KH);
+        saleBtn.setCallbackData(Constant.SALE_REPORT);
+
+        buyBtn.setText(Constant.BUY_REPORT_TEXT_KH);
+        buyBtn.setCallbackData(Constant.BUY_REPORT);
+
+        priceBtn.setText(Constant.PRICE_TEXT_KH);
+        priceBtn.setCallbackData(Constant.PRICE_REPORT);
+
+        reportSaleBtn.add(saleBtn);
+        reportBuyBtn.add(buyBtn);
+        reportPriceBtn.add(priceBtn);
+        listInlineButton.add(reportSaleBtn);
+        listInlineButton.add(reportBuyBtn);
+        listInlineButton.add(reportPriceBtn);
+        inlineKeyboardMarkup.setKeyboard(listInlineButton);
+        sendMessage.setReplyMarkup(inlineKeyboardMarkup);
+        try {
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void defaultEnglishService(String chat_id) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setText("Here is option:");
+        sendMessage.setChatId(chat_id);
+        sendMessage.setParseMode(ParseMode.MARKDOWN);
+
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> listInlineButton = new ArrayList<>();
+        List<InlineKeyboardButton> reportSaleBtn = new ArrayList<>();
+        List<InlineKeyboardButton> reportBuyBtn = new ArrayList<>();
+        List<InlineKeyboardButton> reportPriceBtn = new ArrayList<>();
+        InlineKeyboardButton saleBtn = new InlineKeyboardButton();
+        InlineKeyboardButton buyBtn = new InlineKeyboardButton();
+        InlineKeyboardButton priceBtn = new InlineKeyboardButton();
+
+        saleBtn.setText(Constant.SALE_REPORT_TEXT);
+        saleBtn.setCallbackData(Constant.SALE_REPORT);
+
+        buyBtn.setText(Constant.BUY_REPORT_TEXT);
+        buyBtn.setCallbackData(Constant.BUY_REPORT);
+
+        priceBtn.setText(Constant.PRICE_TEXT);
+        priceBtn.setCallbackData(Constant.PRICE_REPORT);
+
+        reportSaleBtn.add(saleBtn);
+        reportBuyBtn.add(buyBtn);
+        reportPriceBtn.add(priceBtn);
+        listInlineButton.add(reportSaleBtn);
+        listInlineButton.add(reportBuyBtn);
+        listInlineButton.add(reportPriceBtn);
+        inlineKeyboardMarkup.setKeyboard(listInlineButton);
+        sendMessage.setReplyMarkup(inlineKeyboardMarkup);
+        try {
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
         }
     }
 
