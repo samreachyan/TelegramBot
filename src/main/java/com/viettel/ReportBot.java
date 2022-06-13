@@ -32,6 +32,8 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ReportBot extends TelegramLongPollingBot {
     List<TelegramUser> users = TelegramUserDAO.getAllTelegramUsers();
@@ -159,6 +161,28 @@ public class ReportBot extends TelegramLongPollingBot {
                     } catch (TelegramApiException e) {
                         e.printStackTrace();
                     }
+                } else if (update.getMessage().getText().contains("/set")) {
+                    // set string and substr the last number
+                    String command = update.getMessage().getText().trim();
+                    Pattern pattern = Pattern.compile("(\\s+)?/set\\s[0-9]{2,1000000}(?!\\w)");
+                    Matcher matcher = pattern.matcher(command);
+                    if (matcher.find()) {
+                        // TODO: get the last number in the string and convert to int
+                        command = command.substring(command.indexOf(" " + 2));
+                        System.out.println(command);
+                        // call timer alert method
+                        startAlertTimer(chat_id);
+
+                    } else {
+                        SendMessage sendMessage = new SendMessage();
+                        sendMessage.setChatId(chat_id);
+                        sendMessage.setText("Invalid command. Please try again! Format example: /set <seconds>");
+                        try {
+                            execute(sendMessage);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
             }
         }
@@ -169,36 +193,8 @@ public class ReportBot extends TelegramLongPollingBot {
 
             SendChatAction sendChatAction = new SendChatAction();
             if (data.equals(Constant.SALE_REPORT)) {
-                sendChatAction.setChatId(chat_id);
-                SendMessage sendMessage = new SendMessage();
-                sendMessage.setText("Generating report, please wait!");
-                sendMessage.setChatId(chat_id);
-                try {
-                    sendChatAction.setAction(ActionType.TYPING);
-                    execute(sendChatAction);
-                    execute(sendMessage);
-                } catch (TelegramApiException e) {
-                    e.printStackTrace();
-                }
-
-                // send photo from FILE path local
-                SendPhoto message = new SendPhoto();
-                message.setChatId(chat_id);
-                String imgName = null;
-                try {
-                    imgName = ChartReport();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                message.setCaption("Here is Report read from Database. Generate image: " + imgName);
-                message.setPhoto(new InputFile(new File(imgName)));
-
-                try {
-                    step = Constant.SELECT_REPORT;
-                    execute(message); // Call method to send the message
-                } catch (TelegramApiException e) {
-                    e.printStackTrace();
-                }
+                step = Constant.SALE_REPORT;
+                sendSaleReport(chat_id);
             }
             else if (data.equals(Constant.BUY_REPORT)) {
                 sendChatAction.setChatId(chat_id);
@@ -384,6 +380,54 @@ public class ReportBot extends TelegramLongPollingBot {
         }
     }
 
+    public void startAlertTimer(String chat_id) {
+        TimerExecutor.getInstance().startExecutionEveryDayAt(new CustomTimerTask("First day alert", -1) {
+            @Override
+            public void execute() {
+                sendSaleReport(chat_id);
+            }
+        }, 0,0, 0);
+
+        TimerExecutor.getInstance().startExecutionEveryDayAt(new CustomTimerTask("Second day alert", -1) {
+            @Override
+            public void execute() {
+                sendSaleReport(chat_id);
+            }
+        }, 01, 25, 50);
+    }
+
+    public void sendSaleReport(String chat_id) {
+        SendChatAction sendChatAction = new SendChatAction();
+        sendChatAction.setChatId(chat_id);
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setText("Generating report, please wait!");
+        sendMessage.setChatId(chat_id);
+        try {
+            sendChatAction.setAction(ActionType.TYPING);
+            execute(sendChatAction);
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+
+        // send photo from FILE path local
+        SendPhoto message = new SendPhoto();
+        message.setChatId(chat_id);
+        String imgName = null;
+        try {
+            imgName = ChartReport();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        message.setCaption("Here is Report read from Database. Generate image: " + imgName);
+        message.setPhoto(new InputFile(new File(imgName)));
+
+        try {
+            execute(message); // Call method to send the message
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
     public static String ChartReport() throws IOException {
         JFreeChart barChart = ChartFactory.createBarChart(
                 "Report Sale Chart",
